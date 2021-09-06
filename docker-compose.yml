@@ -1,0 +1,57 @@
+version: '2'
+services:
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: 'bitnami/kafka:latest'
+    ports:
+      - '9092:9092'
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - ./server.properties:/bitnami/kafka/config/server.properties
+    depends_on:
+      - zookeeper
+
+  downloader:
+    build:
+      context: ./youtube-downloader
+      dockerfile: ./Dockerfile
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - TOPIC_PARTITION=4
+    depends_on:
+      - zookeeper
+      - kafka
+
+  converter:
+    build:
+      context: ./youtube-converter
+      dockerfile: ./Dockerfile
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - TOPIC_PARTITION=4
+    depends_on:
+      - zookeeper
+      - kafka
+
+  presenter:
+    build:
+      context: ./youtube-presenter
+      dockerfile: ./Dockerfile
+    ports:
+    - '8080:8080'
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - AUDIO_LOCATION=/app/audio/
+    depends_on:
+      - zookeeper
+      - kafka
