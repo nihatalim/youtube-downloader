@@ -1,4 +1,10 @@
-# Youtube Downloader
+# Youtube Downloader (with Event Driven Architecture)
+
+## Technologies
+- Docker
+- Spring Boot
+- Kafka
+- Youtube-DL
 
 # Prerequirements
 
